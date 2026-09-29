@@ -1,0 +1,11 @@
+/.idea/
+**/.idea/
+/.codex/
+/.agents/
+/.agent/tmp/
+/skills-lock.json
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+**/*.env
+/user-service/src/main/resources/application.yaml
+/activity-service/src/main/resources/application.yaml
