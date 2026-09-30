@@ -7,6 +7,7 @@
 - No active claims.
 
 ## Tasks
+- Fixed ActivityService validation return-type mismatch; invalid user prevents save and returns HTTP 400, upstream validation failures remain HTTP 500; activity clean tests 14/14: done 2026-09-30.
 - Prepared parent-root Git snapshot with all Maven modules, safe config examples, and ignore rules; full clean reactor tests 30/30: done 2026-09-29.
 - Activity UserValidationService retains try-catch: HTTP 404 returns ApiResponse<Boolean>(data=false), other HTTP errors propagate; 12/12 activity tests: done 2026-09-29.
 - Activity UserValidationService now returns upstream ApiResponse<Boolean> and deserialization test passes; 11/11 activity tests: done 2026-09-29.
@@ -57,6 +58,7 @@
 - 2026-09-28: UserService assigns create/update timestamps before `save()` and User entity no longer uses Hibernate timestamp generators, meeting both save-only and immediate-response requirements. Against: another repository writer could omit timestamps; currently all user writes route through UserService.
 
 ## Last 3 handoffs
+- 2026-09-30T0505Z - Codex - activity validation ApiResponse<Boolean> handled in caller; status/test coverage repaired; 14/14 activity tests pass. See `log/2026-09-30T0505Z-codex-gpt-6.md`.
 - 2026-09-29T1110Z - Codex - parent-root Git snapshot prepared; remote origin already correct, prior commit contained only activity files; safe staging and 30/30 tests verified. See `log/2026-09-29T1110Z-codex-gpt-6.md`.
 - 2026-09-29T0735Z - Codex - activity validation try-catch restored with ApiResponse<Boolean> on 404; 12/12 activity tests pass. See `log/2026-09-29T0735Z-codex-gpt-6.md`.
 - 2026-09-29T0731Z - Codex - repaired activity UserValidationService return type and verified WebClient JSON decoding; 11/11 activity tests pass. See `log/2026-09-29T0731Z-codex-gpt-6.md`.

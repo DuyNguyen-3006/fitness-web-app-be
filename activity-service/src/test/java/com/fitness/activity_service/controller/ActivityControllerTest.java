@@ -44,6 +44,21 @@ class ActivityControllerTest {
     }
 
     @Test
+    void postActivityReturnsBadRequestForUnknownUser() throws Exception {
+        ActivityInterface service = mock(ActivityInterface.class);
+        when(service.trackActivity(any())).thenReturn(ApiResponse.error("Invalid user ID: missing"));
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(new ActivityController(service))
+                .setControllerAdvice(new ActivityExceptionHandler()).build();
+
+        mvc.perform(post("/api/activities")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\":\"missing\",\"type\":\"RUNNING\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid user ID: missing"));
+    }
+
+    @Test
     void getUserTrackReturnsUserActivities() throws Exception {
         ActivityInterface service = mock(ActivityInterface.class);
         ActivityResponse activity = new ActivityResponse();

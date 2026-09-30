@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +31,9 @@ class ActivityServiceTest {
     @Test
     void trackActivitySavesRequestAndReturnsSavedData() {
         ActivityRepository repository = mock(ActivityRepository.class);
-        ActivityService service = new ActivityService(repository, Mappers.getMapper(ActivityMapper.class));
+        UserValidationService validationService = mock(UserValidationService.class);
+        when(validationService.validateUser("user-1")).thenReturn(ApiResponse.success(true));
+        ActivityService service = new ActivityService(repository, Mappers.getMapper(ActivityMapper.class), validationService);
         ActivityRequest request = new ActivityRequest();
         request.setId("client-id");
         request.setUserId("user-1");
@@ -65,9 +68,29 @@ class ActivityServiceTest {
     }
 
     @Test
+    void trackActivityDoesNotSaveForUnknownUserOrFailedValidation() {
+        ActivityRepository repository = mock(ActivityRepository.class);
+        UserValidationService validationService = mock(UserValidationService.class);
+        ActivityService service = new ActivityService(repository, Mappers.getMapper(ActivityMapper.class), validationService);
+        ActivityRequest request = new ActivityRequest();
+        request.setUserId("missing");
+
+        when(validationService.validateUser("missing")).thenReturn(ApiResponse.success(false));
+        ApiResponse<ActivityResponse> result = service.trackActivity(request);
+        assertEquals(false, result.success());
+        assertEquals("Invalid user ID: missing", result.message());
+        verify(repository, never()).save(any(Activity.class));
+
+        when(validationService.validateUser("missing")).thenReturn(ApiResponse.error("User service unavailable"));
+        assertThrows(IllegalStateException.class, () -> service.trackActivity(request));
+        verify(repository, never()).save(any(Activity.class));
+    }
+
+    @Test
     void getUserTrackReturnsActivitiesInRepositoryOrder() {
         ActivityRepository repository = mock(ActivityRepository.class);
-        ActivityService service = new ActivityService(repository, Mappers.getMapper(ActivityMapper.class));
+        ActivityService service = new ActivityService(repository, Mappers.getMapper(ActivityMapper.class),
+                mock(UserValidationService.class));
         Activity newer = Activity.builder().id("newer").userId("user-1")
                 .startTime(LocalDateTime.of(2026, 9, 28, 10, 0)).build();
         Activity older = Activity.builder().id("older").userId("user-1")
@@ -84,7 +107,8 @@ class ActivityServiceTest {
     @Test
     void getActivityByIdMapsFoundActivityAndRejectsMissingId() {
         ActivityRepository repository = mock(ActivityRepository.class);
-        ActivityService service = new ActivityService(repository, Mappers.getMapper(ActivityMapper.class));
+        ActivityService service = new ActivityService(repository, Mappers.getMapper(ActivityMapper.class),
+                mock(UserValidationService.class));
         Activity activity = Activity.builder().id("activity-1").userId("user-1")
                 .type(ActivityType.RUNNING).build();
         when(repository.findById("activity-1")).thenReturn(Optional.of(activity));

@@ -24,7 +24,9 @@ public class ActivityController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<ActivityResponse>> trackActivity(@RequestBody ActivityRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(activityService.trackActivity(request));
+        ApiResponse<ActivityResponse> response = activityService.trackActivity(request);
+        return ResponseEntity.status(response.success() ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST)
+                .body(response);
     }
 
     @GetMapping("/user/{userId}")

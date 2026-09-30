@@ -18,9 +18,19 @@ import java.util.List;
 public class ActivityService implements ActivityInterface {
     private final ActivityRepository activityRepository;
     private final ActivityMapper activityMapper;
+    private final UserValidationService userValidationService;
 
     @Override
     public ApiResponse<ActivityResponse> trackActivity(ActivityRequest request) {
+
+        ApiResponse<Boolean> validation = userValidationService.validateUser(request.getUserId());
+        if (validation == null || !validation.success() || validation.data() == null) {
+            throw new IllegalStateException("User validation failed");
+        }
+        if (!validation.data()) {
+            return ApiResponse.error("Invalid user ID: " + request.getUserId());
+        }
+
         Activity activity = activityMapper.toEntity(request);
         Activity saved = activityRepository.save(activity);
         return ApiResponse.success("Activity tracked successfully", activityMapper.toResponse(saved));
