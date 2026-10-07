@@ -16,6 +16,7 @@
         <module>server-eureka</module>
         <module>ai-service</module>
         <module>configserver</module>
+        <module>api-gateway</module>
     </modules>
 
     <properties>

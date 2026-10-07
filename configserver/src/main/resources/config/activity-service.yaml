@@ -1,0 +1,33 @@
+﻿spring:
+  config:
+    import:
+      - "optional:file:./src/main/java/com/fitness/activity_service/atlas-credentials.env[.properties]"
+      - "optional:file:./activity-service/src/main/java/com/fitness/activity_service/atlas-credentials.env[.properties]"
+  mongodb:
+    uri: "${MONGODB_URI}"
+    database: "${MONGODB_DATABASE:fitness_activity_db}"
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+server:
+  port: 8082
+
+eureka:
+  instance:
+    hostname: localhost
+    instance-id: localhost:${spring.application.name}:${server.port}
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+rabbitmq:
+  exchange:
+    name: fitness-exchange
+  queue:
+    name: activity-queue
+  routing:
+    key: activity.tracking

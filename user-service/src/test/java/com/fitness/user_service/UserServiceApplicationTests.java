@@ -25,6 +25,7 @@ class UserServiceApplicationTests {
 		mvc.perform(get("/v3/api-docs"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.info.title").value("Fitness User Service API"))
+				.andExpect(jsonPath("$.servers[0].url").value("/"))
 				.andExpect(jsonPath("$.paths['/api/users']").exists())
 				.andExpect(jsonPath("$.paths['/api/users/register']").exists())
 				.andExpect(jsonPath("$.paths['/api/users/{userId}/password']").exists())

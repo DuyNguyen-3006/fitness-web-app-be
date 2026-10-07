@@ -7,6 +7,10 @@
 - No active claim.
 
 ## Tasks
+- Gateway Swagger UI now lists user/activity/AI OpenAPI specs through Eureka-backed MVC proxy routes; service specs use relative `/` servers for Try It Out through the current host; 49/49 clean tests and live gateway docs proxy pass: done 2026-10-07.
+- Attached the generated gateway to the root Maven reactor: flattened `api-gateway/api-gateway` into `api-gateway`, changed its parent to `fitness-web`, and verified Maven validate plus 1/1 gateway test: done 2026-10-07.
+- Repaired Config Server client loading for user/activity/AI: user Config Client dependency restored, AI/activity credentials imported locally from both supported working directories, Config Server kept server-only, test config isolated; 49/49 clean reactor tests pass and remote Config Server endpoints return HTTP 200: done 2026-10-07.
+- Replaced Config Client with Config Server, enabled the server annotation, corrected native YAML, and verified `/user-service/default`; configserver clean tests 2/2 pass: done 2026-10-07.
 - Attached configserver to the fitness-web Maven reactor and removed its standalone IntelliJ Maven import; `mvn -o -B -ntp -pl configserver -am validate` and compile pass: done 2026-10-07.
 - AI Rabbit listener now maps successful generated responses into Mongo Recommendation documents and saves them; MapStruct processor configured, AI clean tests 16/16 pass: done 2026-10-06.
 - AI generation now maps parsed Gemini JSON to a full `ApiResponse<GeneratedRecommendationResponse>` with activity/user IDs, type, analysis, improvements, suggestions, safety, createdAt, and totalTokenCount; Rabbit logs token usage, and AI clean tests 15/15 pass: done 2026-10-06.
@@ -60,7 +64,8 @@
 - Restore source-level CRUD after regression: done 2026-09-26.
 
 ## Bugs
-- [ ] configserver uses `spring-cloud-starter-config` (Config Client) without `spring.config.import`; its existing context test fails with `No spring.config.import set` when included in the parent test reactor. Config Server implementation/configuration remains pending.
+- [x] AI startup failed with invalid MongoDB URI because `${AI_MONGODB_URI}` was not populated from its ignored local env file; local file import now lives in AI's own application.yaml. Activity had the same path gap for `${MONGODB_URI}`; its local import is now configured (2026-10-07; see `log/2026-10-07T0452Z-codex-gpt-6-config-clients.md`).
+- [x] configserver startup failed with `No spring.config.import set` because its POM used Config Client instead of Server; changed dependency, enabled Config Server, fixed native configuration, and verified HTTP endpoint (2026-10-07; see `log/2026-10-07T0418Z-codex-gpt-6-configserver-startup.md`).
 - [ ] Tutorial prompt's improvements and suggestions are object arrays while Recommendation persists `List<String>`; current parser flattens those objects into strings.
 - [x] AI listener generated recommendations but did not save them; listener now maps and saves successful results before logging (2026-10-06; see `log/2026-10-06T1008Z-codex-gpt-6-ai-save-recommendation.md`).
 - [x] AI-service `/swagger-ui.html` missing because only Swagger model classes were declared; added Springdoc UI starter and verified UI/docs routes (2026-10-04).
@@ -84,6 +89,10 @@
 - 2026-09-28: UserService assigns create/update timestamps before `save()` and User entity no longer uses Hibernate timestamp generators, meeting both save-only and immediate-response requirements. Against: another repository writer could omit timestamps; currently all user writes route through UserService.
 
 ## Last 3 handoffs
+- 2026-10-07T0642Z - Codex - configured gateway Swagger aggregation and relative OpenAPI servers; 49 clean tests and live docs proxy pass. See `log/2026-10-07T0642Z-codex-gpt-6-gateway-swagger.md`.
+- 2026-10-07T0625Z - Codex - nested api-gateway under fitness-web Maven parent; validate/test pass. See `log/2026-10-07T0625Z-codex-gpt-6-gateway-parent.md`.
+- 2026-10-07T0452Z - Codex - fixed Config Server client config loading for user/activity/AI; clean 49/49 tests and three Config Server HTTP endpoints pass. See `log/2026-10-07T0452Z-codex-gpt-6-config-clients.md`.
+- 2026-10-07T0418Z - Codex - fixed Config Server startup and native endpoint, clean tests 2/2. See `log/2026-10-07T0418Z-codex-gpt-6-configserver-startup.md`.
 - 2026-10-07T0341Z - Codex - nested configserver under fitness-web in Maven and IntelliJ; validate/compile pass, context test exposes existing Config Client setup issue. See `log/2026-10-07T0341Z-codex-gpt-6-configserver-parent.md`.
 - 2026-10-06T1008Z - Codex - MapStruct recommendation mapper and Rabbit listener persistence added, AI clean tests 16/16. See `log/2026-10-06T1008Z-codex-gpt-6-ai-save-recommendation.md`.
 - 2026-10-06T0505Z - Codex - completed AI recommendation response mapping and restored missing Gemini result DTO; AI clean tests 15/15. See `log/2026-10-06T0505Z-codex-gpt-6-recommendation-response.md`.

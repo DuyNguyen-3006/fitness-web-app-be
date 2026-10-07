@@ -2,6 +2,8 @@ package com.fitness.user_service.infrastructure.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.server.servlet.context.ServletWebServerInitializedEvent;
@@ -15,7 +17,7 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI userServiceOpenApi() {
-        return new OpenAPI().info(new Info()
+        return new OpenAPI().servers(List.of(new Server().url("/"))).info(new Info()
                 .title("Fitness User Service API")
                 .version("v1")
                 .description("API for managing fitness users"));

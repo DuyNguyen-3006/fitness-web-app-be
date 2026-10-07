@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -35,6 +36,8 @@ class SwaggerUiTest {
             assertEquals(200, ui.statusCode());
             assertEquals(200, docs.statusCode());
             assertTrue(docs.body().contains("/api/activities"));
+            assertEquals("/", JsonMapper.builder().build().readTree(docs.body())
+                    .path("servers").get(0).path("url").asText());
         }
     }
 }
