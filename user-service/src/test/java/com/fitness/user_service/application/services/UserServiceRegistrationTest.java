@@ -4,11 +4,12 @@ import com.fitness.common.api.ApiResponse;
 import com.fitness.user_service.application.dto.user.UserRequest;
 import com.fitness.user_service.application.dto.user.UserResponse;
 import com.fitness.user_service.application.exceptions.UserAlreadyExistsException;
-import com.fitness.user_service.application.mapper.UserMapperImpl;
+import com.fitness.user_service.application.mapper.UserMapper;
 import com.fitness.user_service.domain.models.User;
 import com.fitness.user_service.infrastructure.config.PasswordConfig;
 import com.fitness.user_service.infrastructure.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import tools.jackson.databind.ObjectMapper;
 
@@ -22,7 +23,7 @@ class UserServiceRegistrationTest {
     void registrationStoresEncodedPasswordAndMapsResponse() {
         UserRepository repository = mock(UserRepository.class);
         PasswordEncoder encoder = new PasswordConfig().passwordEncoder();
-        UserService service = new UserService(repository, new UserMapperImpl(), encoder);
+        UserService service = new UserService(repository, Mappers.getMapper(UserMapper.class), encoder);
         UserRequest request = new UserRequest();
         request.setEmail("test@example.com");
         request.setPassword("plain-password");
@@ -55,7 +56,7 @@ class UserServiceRegistrationTest {
     @Test
     void duplicateEmailIsRejectedBeforeSaving() {
         UserRepository repository = mock(UserRepository.class);
-        UserService service = new UserService(repository, new UserMapperImpl(), new PasswordConfig().passwordEncoder());
+        UserService service = new UserService(repository, Mappers.getMapper(UserMapper.class), new PasswordConfig().passwordEncoder());
         UserRequest request = new UserRequest();
         request.setEmail("test@example.com");
         request.setPassword("plain-password");

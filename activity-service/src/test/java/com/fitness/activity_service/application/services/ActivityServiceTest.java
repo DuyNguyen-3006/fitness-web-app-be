@@ -11,6 +11,7 @@ import com.fitness.common.api.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mapstruct.factory.Mappers;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,13 +28,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ActivityServiceTest {
+    private final RabbitTemplate rabbitTemplate = mock(RabbitTemplate.class);
+
+    private ActivityService createService(ActivityRepository repository, UserValidationService validationService) {
+        return new ActivityService(repository, Mappers.getMapper(ActivityMapper.class),
+                validationService, rabbitTemplate);
+    }
 
     @Test
     void trackActivitySavesRequestAndReturnsSavedData() {
         ActivityRepository repository = mock(ActivityRepository.class);
         UserValidationService validationService = mock(UserValidationService.class);
         when(validationService.validateUser("user-1")).thenReturn(ApiResponse.success(true));
-        ActivityService service = new ActivityService(repository, Mappers.getMapper(ActivityMapper.class), validationService);
+        ActivityService service = createService(repository, validationService);
         ActivityRequest request = new ActivityRequest();
         request.setId("client-id");
         request.setUserId("user-1");
@@ -71,7 +78,7 @@ class ActivityServiceTest {
     void trackActivityDoesNotSaveForUnknownUserOrFailedValidation() {
         ActivityRepository repository = mock(ActivityRepository.class);
         UserValidationService validationService = mock(UserValidationService.class);
-        ActivityService service = new ActivityService(repository, Mappers.getMapper(ActivityMapper.class), validationService);
+        ActivityService service = createService(repository, validationService);
         ActivityRequest request = new ActivityRequest();
         request.setUserId("missing");
 
@@ -89,8 +96,7 @@ class ActivityServiceTest {
     @Test
     void getUserTrackReturnsActivitiesInRepositoryOrder() {
         ActivityRepository repository = mock(ActivityRepository.class);
-        ActivityService service = new ActivityService(repository, Mappers.getMapper(ActivityMapper.class),
-                mock(UserValidationService.class));
+        ActivityService service = createService(repository, mock(UserValidationService.class));
         Activity newer = Activity.builder().id("newer").userId("user-1")
                 .startTime(LocalDateTime.of(2026, 9, 28, 10, 0)).build();
         Activity older = Activity.builder().id("older").userId("user-1")
@@ -107,8 +113,7 @@ class ActivityServiceTest {
     @Test
     void getActivityByIdMapsFoundActivityAndRejectsMissingId() {
         ActivityRepository repository = mock(ActivityRepository.class);
-        ActivityService service = new ActivityService(repository, Mappers.getMapper(ActivityMapper.class),
-                mock(UserValidationService.class));
+        ActivityService service = createService(repository, mock(UserValidationService.class));
         Activity activity = Activity.builder().id("activity-1").userId("user-1")
                 .type(ActivityType.RUNNING).build();
         when(repository.findById("activity-1")).thenReturn(Optional.of(activity));

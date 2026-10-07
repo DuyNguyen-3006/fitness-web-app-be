@@ -6,11 +6,12 @@ import com.fitness.user_service.application.dto.user.UserResponse;
 import com.fitness.user_service.application.dto.user.UserUpdateRequest;
 import com.fitness.user_service.application.exceptions.IncorrectCurrentPasswordException;
 import com.fitness.user_service.application.exceptions.UserNotFoundException;
-import com.fitness.user_service.application.mapper.UserMapperImpl;
+import com.fitness.user_service.application.mapper.UserMapper;
 import com.fitness.user_service.domain.models.User;
 import com.fitness.user_service.infrastructure.config.PasswordConfig;
 import com.fitness.user_service.infrastructure.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import tools.jackson.databind.ObjectMapper;
 
@@ -26,7 +27,7 @@ class UserServiceCrudTest {
 
     private final UserRepository repository = mock(UserRepository.class);
     private final PasswordEncoder encoder = new PasswordConfig().passwordEncoder();
-    private final UserService service = new UserService(repository, new UserMapperImpl(), encoder);
+    private final UserService service = new UserService(repository, Mappers.getMapper(UserMapper.class), encoder);
 
     @Test
     void updateOnlyChangesBasicProfileFields() {

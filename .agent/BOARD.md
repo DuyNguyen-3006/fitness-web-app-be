@@ -4,9 +4,27 @@
 - Codex: local code changes, Maven verification.
 
 ## Now
-- No active claims.
+- No active claim.
 
 ## Tasks
+- Attached configserver to the fitness-web Maven reactor and removed its standalone IntelliJ Maven import; `mvn -o -B -ntp -pl configserver -am validate` and compile pass: done 2026-10-07.
+- AI Rabbit listener now maps successful generated responses into Mongo Recommendation documents and saves them; MapStruct processor configured, AI clean tests 16/16 pass: done 2026-10-06.
+- AI generation now maps parsed Gemini JSON to a full `ApiResponse<GeneratedRecommendationResponse>` with activity/user IDs, type, analysis, improvements, suggestions, safety, createdAt, and totalTokenCount; Rabbit logs token usage, and AI clean tests 15/15 pass: done 2026-10-06.
+- AI-service parser now reads Gemini's extracted JSON content, Swagger UI starter serves `/swagger-ui.html` and `/v3/api-docs`, missing resources return 404; AI clean tests 13/13: done 2026-10-04.
+- AI Gemini generation result and Rabbit log now include `usageMetadata.totalTokenCount`; focused AI clean tests 12/12: done 2026-10-02. Recommendation GET APIs remain unchanged.
+- AI Rabbit listener URI failure diagnosed: `GEMINI_API_URL` held a Google Search URL with leading whitespace and a key-like value in its query. GeminiService now normalizes whitespace and rejects non-endpoint/search URLs without echoing them; AI clean tests 10/10: done 2026-10-02. User must replace the IDE environment value and rotate the exposed key if active.
+- GeminiService constructor/response contract restored and activity prompt made more specific to single-session fitness data; AI clean tests 8/8 and isolated startup on 8083 passed: done 2026-10-02. No new startup log was attached; Gemini credentials remain unset locally.
+- Activity recommendation prompt tailored to recorded metrics and Recommendation fields; AI main compile passed, full tests blocked by existing GeminiServiceTest constructor mismatch: done 2026-10-02.
+- Repaired GeminiService after tutorial-style edit reintroduced final-field initialization and response-type errors; AI clean tests 8/8: done 2026-10-02.
+- Gemini request/response implemented with WebClient and typed response parsing; AI clean tests 8/8: done 2026-10-02. Live Gemini call awaits API URL/key.
+- Local RabbitMQ guest/guest restored on the existing Docker volume, loopback restriction relaxed for host-to-container dev access, Compose defaults aligned with activity YAML; management API HTTP 200 and broker healthy: done 2026-10-01.
+- Stabilized user/activity tests with test-only configuration, H2 for user context tests, a single ActivityService test constructor helper, VS Code Java auto-build disabled, and Maven test workflow; full reactor clean test 37/37: done 2026-10-01.
+- Activity startup repaired after MapStruct implementation missing from IDE build; Maven clean generated `ActivityMapperImpl`, RabbitMQ property keys and Docker credentials aligned, queue/exchange/binding declared, tests updated; done 2026-10-01; 14/14 tests pass.
+- Activity RabbitMQ converter moved from deprecated Jackson 2 class to Jackson 3 `JacksonJsonMessageConverter`; done 2026-10-01; 14/14 activity tests pass.
+- Activity RabbitMQ local setup: AMQP starter, Docker Compose broker, and matching YAML defaults; done 2026-10-01; 14/14 activity tests pass, container healthy, management HTTP 200.
+- AI GET recommendation APIs by userId and activityId: done 2026-09-30; 5/5 AI tests and live Atlas-backed HTTP 200/404 checks pass.
+- AI package structure and isolated recommendation Mongo configuration: done 2026-09-30; read-only Atlas ping succeeds, AI database exists, and all three services currently register UP in Eureka.
+- Attached ai-service to parent Maven reactor; parent/child POMs aligned and module compile passes: done 2026-09-30.
 - Fixed ActivityService validation return-type mismatch; invalid user prevents save and returns HTTP 400, upstream validation failures remain HTTP 500; activity clean tests 14/14: done 2026-09-30.
 - Prepared parent-root Git snapshot with all Maven modules, safe config examples, and ignore rules; full clean reactor tests 30/30: done 2026-09-29.
 - Activity UserValidationService retains try-catch: HTTP 404 returns ApiResponse<Boolean>(data=false), other HTTP errors propagate; 12/12 activity tests: done 2026-09-29.
@@ -42,6 +60,14 @@
 - Restore source-level CRUD after regression: done 2026-09-26.
 
 ## Bugs
+- [ ] configserver uses `spring-cloud-starter-config` (Config Client) without `spring.config.import`; its existing context test fails with `No spring.config.import set` when included in the parent test reactor. Config Server implementation/configuration remains pending.
+- [ ] Tutorial prompt's improvements and suggestions are object arrays while Recommendation persists `List<String>`; current parser flattens those objects into strings.
+- [x] AI listener generated recommendations but did not save them; listener now maps and saves successful results before logging (2026-10-06; see `log/2026-10-06T1008Z-codex-gpt-6-ai-save-recommendation.md`).
+- [x] AI-service `/swagger-ui.html` missing because only Swagger model classes were declared; added Springdoc UI starter and verified UI/docs routes (2026-10-04).
+- [x] AI response parser looked for `candidates` inside text already extracted by GeminiService, causing NPE after successful Rabbit delivery; now parses text JSON directly (2026-10-04).
+- [x] ai-service test compilation: GeminiServiceTest called a three-argument constructor while GeminiService had one; restored the tested constructor and response parsing, 8/8 clean tests pass (2026-10-02).
+- [x] Activity startup lacked `ActivityMapper` bean because `target/classes` had no generated `ActivityMapperImpl`; Maven clean compile regenerated it and full context test passed. IDE build may overwrite generated output again; delegate build/run to Maven if it recurs (2026-10-01T0459Z log).
+- [x] VS Code Java language server auto-build overwrote Maven's generated `ActivityMapperImpl.class` with ECJ error bytecode containing unqualified DTO/entity types; generated Java source was correct. Disabling workspace `java.autobuild.enabled` stopped the collision; full clean reactor tests passed (2026-10-01T0509Z log).
 - [x] User register response had null `createdAt` and `updatedAt` because DTO mapping ran before Hibernate flush; service now assigns timestamps before `save()` so immediate create/update responses have them (2026-09-28T1029Z log).
 - [x] Activity service returned 404 for `/swagger-ui.html` and `/v3/api-docs` because it depended on swagger-models only, without springdoc UI starter; fixed in activity-service POM (2026-09-28T1015Z log).
 - [x] `ActivityControler.java` was a duplicate empty class in the default package, misleading IDE navigation; removed. Real endpoint remains in `ActivityController.java` (2026-09-28T1009Z log).
@@ -58,6 +84,23 @@
 - 2026-09-28: UserService assigns create/update timestamps before `save()` and User entity no longer uses Hibernate timestamp generators, meeting both save-only and immediate-response requirements. Against: another repository writer could omit timestamps; currently all user writes route through UserService.
 
 ## Last 3 handoffs
+- 2026-10-07T0341Z - Codex - nested configserver under fitness-web in Maven and IntelliJ; validate/compile pass, context test exposes existing Config Client setup issue. See `log/2026-10-07T0341Z-codex-gpt-6-configserver-parent.md`.
+- 2026-10-06T1008Z - Codex - MapStruct recommendation mapper and Rabbit listener persistence added, AI clean tests 16/16. See `log/2026-10-06T1008Z-codex-gpt-6-ai-save-recommendation.md`.
+- 2026-10-06T0505Z - Codex - completed AI recommendation response mapping and restored missing Gemini result DTO; AI clean tests 15/15. See `log/2026-10-06T0505Z-codex-gpt-6-recommendation-response.md`.
+- 2026-10-04T1503Z - Codex - fixed AI parser and Swagger UI route, verified AI clean tests 13/13; identified recommendation persistence gap. See `log/2026-10-04T1503Z-codex-gpt-6-ai-log-and-swagger.md`.
+- 2026-10-02T0612Z - Codex - carried Gemini totalTokenCount through generation result and Rabbit log; AI clean tests 12/12. See `log/2026-10-02T0612Z-codex-gpt-6-gemini-token-usage.md`.
+- 2026-10-02T0550Z - Codex - diagnosed malformed Gemini URL in Rabbit listener log, added safe endpoint validation and tests; AI clean tests 10/10. See `log/2026-10-02T0550Z-codex-gpt-6-gemini-url.md`.
+- 2026-10-02T0532Z - Codex - restored GeminiService test contract, refined activity fitness prompt, and verified AI clean tests 8/8. See `log/2026-10-02T0532Z-codex-gpt-6-ai-log-and-prompt.md`.
+- 2026-10-02T0512Z - Codex - added activity prompt and Activity accessors; AI main compile passed, suite blocked by GeminiServiceTest mismatch. See `log/2026-10-02T0512Z-codex-gpt-6-activity-prompt.md`.
+- 2026-10-02T0344Z - Codex - repaired GeminiService constructor injection and typed response parsing; AI clean tests 8/8. See `log/2026-10-02T0344Z-codex-gpt-6-gemini-repair.md`.
+- 2026-10-02T0336Z - Codex - Gemini call and response parsing implemented; AI clean tests 8/8. See `log/2026-10-02T0336Z-codex-gpt-6-gemini.md`.
+- 2026-10-01T0515Z - Codex - resolved RabbitMQ guest authorization failure without resetting volume; guest/guest now works from host. See `log/2026-10-01T0515Z-codex-gpt-6-rabbitmq-guest.md`.
+- 2026-10-01T0509Z - Codex - user/activity tests isolated from local services; VS Code compiler collision fixed; full reactor 37/37 and CI workflow added. See `log/2026-10-01T0509Z-codex-gpt-6-test-stability.md`.
+- 2026-10-01T0254Z - Codex - RabbitMQ JSON converter updated for Spring AMQP 4.1.1; activity tests pass. See `log/2026-10-01T0254Z-codex-gpt-6-rabbitmq-converter.md`.
+- 2026-10-01T0248Z - Codex - Activity RabbitMQ dependency and local Docker broker configured; 14 tests and live broker health/API verified. See `log/2026-10-01T0248Z-codex-gpt-6-rabbitmq-setup.md`.
+- 2026-09-30T0940Z - Codex - recommendation read APIs implemented with ApiResponse; AI now uses synchronous Mongo matching MVC and auditing; verified tests and live read-only HTTP. See `log/2026-09-30T0940Z-codex-gpt-6-recommendation-apis.md`.
+- 2026-09-30T0921Z - Codex - AI structure/config aligned, AI Mongo ping and Eureka registration verified; activity mapper class corruption diagnosed and temporarily repaired. See `log/2026-09-30T0921Z-codex-gpt-6-ai-scaffold-db.md`.
+- 2026-09-30T0731Z - Codex - ai-service parent POM and root module list fixed; reactor validate and compile pass. See `log/2026-09-30T0731Z-codex-gpt-6-ai-parent.md`.
 - 2026-09-30T0505Z - Codex - activity validation ApiResponse<Boolean> handled in caller; status/test coverage repaired; 14/14 activity tests pass. See `log/2026-09-30T0505Z-codex-gpt-6.md`.
 - 2026-09-29T1110Z - Codex - parent-root Git snapshot prepared; remote origin already correct, prior commit contained only activity files; safe staging and 30/30 tests verified. See `log/2026-09-29T1110Z-codex-gpt-6.md`.
 - 2026-09-29T0735Z - Codex - activity validation try-catch restored with ApiResponse<Boolean> on 404; 12/12 activity tests pass. See `log/2026-09-29T0735Z-codex-gpt-6.md`.

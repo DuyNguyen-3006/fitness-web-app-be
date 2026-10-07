@@ -14,6 +14,8 @@
         <module>user-service</module>
         <module>activity-service</module>
         <module>server-eureka</module>
+        <module>ai-service</module>
+        <module>configserver</module>
     </modules>
 
     <properties>
