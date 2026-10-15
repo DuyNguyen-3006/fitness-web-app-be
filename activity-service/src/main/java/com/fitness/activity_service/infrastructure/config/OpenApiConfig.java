@@ -1,8 +1,11 @@
 package com.fitness.activity_service.infrastructure.config;
 
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.List;
 import org.slf4j.Logger;
@@ -15,13 +18,19 @@ import org.springframework.context.event.EventListener;
 @Configuration
 public class OpenApiConfig {
     private static final Logger log = LoggerFactory.getLogger(OpenApiConfig.class);
+    private static final String BEARER_AUTH = "bearerAuth";
 
     @Bean
     public OpenAPI activityServiceOpenApi() {
-        return new OpenAPI().servers(List.of(new Server().url("/"))).info(new Info()
-                .title("Fitness Activity Service API")
-                .version("v1")
-                .description("API for managing fitness activities"));
+        return new OpenAPI()
+                .components(new Components().addSecuritySchemes(BEARER_AUTH,
+                        new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")))
+                .addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH))
+                .servers(List.of(new Server().url("/")))
+                .info(new Info()
+                        .title("Fitness Activity Service API")
+                        .version("v1")
+                        .description("API for managing fitness activities"));
     }
 
     @EventListener

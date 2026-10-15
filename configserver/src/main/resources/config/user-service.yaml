@@ -2,6 +2,12 @@ server:
   port: 8081
 
 spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8181/realms/fitness-oauth2
+          jwk-set-uri: http://localhost:8181/realms/fitness-oauth2/protocol/openid-connect/certs
   datasource:
     url: jdbc:postgresql://localhost:5433/fitness_user_db
     username: postgres

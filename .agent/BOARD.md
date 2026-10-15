@@ -7,6 +7,8 @@
 - No active claim.
 
 ## Tasks
+- Removed the separate Keycloak identity-validation endpoint; Gateway now sends JWT `sub` to the tutorial-style `/api/users/{userId}/validate` while retaining `ApiResponse`; user/gateway tests pass 26/26: done 2026-10-09.
+- Keycloak user synchronization now validates by JWT `sub`, links an existing email or creates a local user, forwards `X-User-Id`, and preserves `ApiResponse`; user/gateway tests pass 26/26: done 2026-10-08.
 - Gateway Swagger UI now lists user/activity/AI OpenAPI specs through Eureka-backed MVC proxy routes; service specs use relative `/` servers for Try It Out through the current host; 49/49 clean tests and live gateway docs proxy pass: done 2026-10-07.
 - Attached the generated gateway to the root Maven reactor: flattened `api-gateway/api-gateway` into `api-gateway`, changed its parent to `fitness-web`, and verified Maven validate plus 1/1 gateway test: done 2026-10-07.
 - Repaired Config Server client loading for user/activity/AI: user Config Client dependency restored, AI/activity credentials imported locally from both supported working directories, Config Server kept server-only, test config isolated; 49/49 clean reactor tests pass and remote Config Server endpoints return HTTP 200: done 2026-10-07.
@@ -64,6 +66,7 @@
 - Restore source-level CRUD after regression: done 2026-09-26.
 
 ## Bugs
+- [x] Gateway validation used the local database primary key and trusted a caller-supplied `X-User-Id`, so an unknown Keycloak `sub` returned 404 and never reached registration. It now validates `keycloakId`, syncs from authenticated JWT claims, and sets the header itself (2026-10-08; see `log/2026-10-08T1340Z-codex-gpt-6-keycloak-user-sync.md`).
 - [x] AI startup failed with invalid MongoDB URI because `${AI_MONGODB_URI}` was not populated from its ignored local env file; local file import now lives in AI's own application.yaml. Activity had the same path gap for `${MONGODB_URI}`; its local import is now configured (2026-10-07; see `log/2026-10-07T0452Z-codex-gpt-6-config-clients.md`).
 - [x] configserver startup failed with `No spring.config.import set` because its POM used Config Client instead of Server; changed dependency, enabled Config Server, fixed native configuration, and verified HTTP endpoint (2026-10-07; see `log/2026-10-07T0418Z-codex-gpt-6-configserver-startup.md`).
 - [ ] Tutorial prompt's improvements and suggestions are object arrays while Recommendation persists `List<String>`; current parser flattens those objects into strings.
@@ -89,6 +92,8 @@
 - 2026-09-28: UserService assigns create/update timestamps before `save()` and User entity no longer uses Hibernate timestamp generators, meeting both save-only and immediate-response requirements. Against: another repository writer could omit timestamps; currently all user writes route through UserService.
 
 ## Last 3 handoffs
+- 2026-10-09T0554Z - Codex - removed `/api/users/identity/{keycloakId}/validate` and restored tutorial-style validation through `/api/users/{userId}/validate`; 26 focused tests pass. See `log/2026-10-09T0554Z-codex-gpt-6-tutorial-validation-route.md`.
+- 2026-10-08T1340Z - Codex - implemented Keycloak `sub`-based local user sync, legacy email linking, gateway header forwarding, and WebFlux routes; 26 focused tests pass. See `log/2026-10-08T1340Z-codex-gpt-6-keycloak-user-sync.md`.
 - 2026-10-07T0642Z - Codex - configured gateway Swagger aggregation and relative OpenAPI servers; 49 clean tests and live docs proxy pass. See `log/2026-10-07T0642Z-codex-gpt-6-gateway-swagger.md`.
 - 2026-10-07T0625Z - Codex - nested api-gateway under fitness-web Maven parent; validate/test pass. See `log/2026-10-07T0625Z-codex-gpt-6-gateway-parent.md`.
 - 2026-10-07T0452Z - Codex - fixed Config Server client config loading for user/activity/AI; clean 49/49 tests and three Config Server HTTP endpoints pass. See `log/2026-10-07T0452Z-codex-gpt-6-config-clients.md`.

@@ -36,8 +36,13 @@ class SwaggerUiTest {
             assertEquals(200, ui.statusCode());
             assertEquals(200, docs.statusCode());
             assertTrue(docs.body().contains("/api/activities"));
-            assertEquals("/", JsonMapper.builder().build().readTree(docs.body())
-                    .path("servers").get(0).path("url").asText());
+            var openApi = JsonMapper.builder().build().readTree(docs.body());
+            assertEquals("/", openApi.path("servers").get(0).path("url").asText());
+            assertEquals("http", openApi.path("components").path("securitySchemes")
+                    .path("bearerAuth").path("type").asText());
+            assertEquals("bearer", openApi.path("components").path("securitySchemes")
+                    .path("bearerAuth").path("scheme").asText());
+            assertTrue(openApi.path("security").get(0).path("bearerAuth").isArray());
         }
     }
 }
