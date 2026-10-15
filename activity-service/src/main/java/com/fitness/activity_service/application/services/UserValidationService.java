@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.Objects;
-
 @Service
 @RequiredArgsConstructor
 public class UserValidationService {
@@ -22,13 +20,15 @@ public class UserValidationService {
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<ApiResponse<Boolean>>() {})
                     .block();
-
-            return Objects.requireNonNull(response, "User validation returned no response body");
+            return response;
         } catch (WebClientResponseException e) {
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return ApiResponse.success("User validation completed", false);
+                return ApiResponse.error("User Not Found: " + userId, null);
+            } else if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                return ApiResponse.error("Invalid Request", null);
+            } else {
+                return ApiResponse.error("An error occurred while validating the user", null);
             }
-            throw e;
         }
     }
 }

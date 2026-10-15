@@ -12,7 +12,6 @@ import reactor.core.publisher.Mono;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserValidationServiceTest {
 
@@ -35,15 +34,16 @@ class UserValidationServiceTest {
     }
 
     @Test
-    void mapsNotFoundToFalseButPropagatesOtherHttpErrors() {
+    void mapsHttpErrorsToApiResponseErrors() {
         WebClient notFoundClient = clientReturning(HttpStatus.NOT_FOUND);
         ApiResponse<Boolean> result = new UserValidationService(notFoundClient).validateUser("missing");
-        assertTrue(result.success());
-        assertFalse(result.data());
+        assertFalse(result.success());
+        assertEquals("User Not Found: missing", result.message());
 
         WebClient serverErrorClient = clientReturning(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThrows(org.springframework.web.reactive.function.client.WebClientResponseException.class,
-                () -> new UserValidationService(serverErrorClient).validateUser("user-1"));
+        ApiResponse<Boolean> serverError = new UserValidationService(serverErrorClient).validateUser("user-1");
+        assertFalse(serverError.success());
+        assertEquals("An error occurred while validating the user", serverError.message());
     }
 
     private static WebClient clientReturning(HttpStatus status) {

@@ -36,6 +36,7 @@ public class UserService implements UserInterface {
         }
 
         User user = userMapper.toEntity(request);
+        user.setKeycloakId(request.getKeycloakId());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         LocalDateTime now = LocalDateTime.now();
         user.setCreatedAt(now);
@@ -89,6 +90,7 @@ public class UserService implements UserInterface {
 
     @Override
     public ApiResponse<Boolean> existByUserId(String userId) {
-        return ApiResponse.success("User validation completed", repository.existsById(userId));
+        boolean exists = repository.existsById(userId) || repository.existsByKeycloakId(userId);
+        return ApiResponse.success("User validation completed", exists);
     }
 }
