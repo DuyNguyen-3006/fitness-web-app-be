@@ -2,7 +2,6 @@ package com.fitness.ai_service.controller;
 
 import com.fitness.ai_service.application.dto.RecommendationResponse;
 import com.fitness.ai_service.application.interfaces.RecommendationInterface;
-import com.fitness.common.api.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,14 +20,14 @@ public class RecommendationController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponse<List<RecommendationResponse>>> getUserRecommendation(
+    public ResponseEntity<List<RecommendationResponse>> getUserRecommendation(
             @PathVariable("userId") String userId) {
-        return ResponseEntity.ok(recommendationService.getUserRecommendation(userId));
+        return ResponseEntity.ok(recommendationService.getUserRecommendation(userId).data());
     }
 
     @GetMapping("/activity/{activityId}")
-    public ResponseEntity<ApiResponse<RecommendationResponse>> getServiceRecommendation(
+    public ResponseEntity<RecommendationResponse> getServiceRecommendation(
             @PathVariable("activityId") String activityId) {
-        return ResponseEntity.ok(recommendationService.getServiceRecommendation(activityId));
+        return ResponseEntity.ok(recommendationService.getServiceRecommendation(activityId).data());
     }
 }

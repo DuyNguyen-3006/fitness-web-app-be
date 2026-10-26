@@ -7,8 +7,11 @@
 - No active claim.
 
 ## Tasks
+- Wired the gateway's CORS source into Spring Security; allowed localhost:5173 preflight returns 200 before authentication, actual unauthenticated requests remain 401 with CORS headers. Gateway clean tests 7/7 pass: done 2026-10-15.
+- Fast-forwarded local dev to feat/keycloak_auth/c9a01e6, created feat/config_cors_recovered and safely deleted local feat/config_cors; preserved 14 source/config files and all 89 pre-existing untracked files. origin/dev remains one commit behind; no push performed: done 2026-10-15.
 - Removed the separate Keycloak identity-validation endpoint; Gateway now sends JWT `sub` to the tutorial-style `/api/users/{userId}/validate` while retaining `ApiResponse`; user/gateway tests pass 26/26: done 2026-10-09.
 - Keycloak user synchronization now validates by JWT `sub`, links an existing email or creates a local user, forwards `X-User-Id`, and preserves `ApiResponse`; user/gateway tests pass 26/26: done 2026-10-08.
+- Restored missing Keycloak source/config from c9a01e6 into the feat/config_cors working tree while preserving current gateway DTO edits; user/activity/AI/config/gateway Maven tests pass (58 executed). No branch, index or commit changes: done 2026-10-15.
 - Gateway Swagger UI now lists user/activity/AI OpenAPI specs through Eureka-backed MVC proxy routes; service specs use relative `/` servers for Try It Out through the current host; 49/49 clean tests and live gateway docs proxy pass: done 2026-10-07.
 - Attached the generated gateway to the root Maven reactor: flattened `api-gateway/api-gateway` into `api-gateway`, changed its parent to `fitness-web`, and verified Maven validate plus 1/1 gateway test: done 2026-10-07.
 - Repaired Config Server client loading for user/activity/AI: user Config Client dependency restored, AI/activity credentials imported locally from both supported working directories, Config Server kept server-only, test config isolated; 49/49 clean reactor tests pass and remote Config Server endpoints return HTTP 200: done 2026-10-07.
@@ -66,7 +69,15 @@
 - Restore source-level CRUD after regression: done 2026-09-26.
 
 ## Bugs
+- [ ] B-006: Historical activity 6ad089310ec13d7727ec8053 exists (created 2026-10-15 15:05:05) but has no recommendation. It predates RabbitMQ startup at 15:06:16, during the confirmed publish outage. Later activities have recommendations; current queue is empty with one consumer. Recovery requires explicitly replaying this existing activity event; no replay was authorized/performed. See log/2026-10-17-codex-missing-activity-recommendation.md.
+- [x] B-007: activity and recommendation success responses were wrapped while the official tutorial frontend reads direct response bodies; controllers now unwrap success data and retain structured error envelopes. See `log/2026-10-16T093556Z-gpt-6-align-official-tutorial-flow.md`.
+- [x] B-006: activity list used `/api/activities/user/{userId}` instead of the tutorial GET `/api/activities` plus `X-User-ID` contract; controller and tests synchronized. See `log/2026-10-16T092150Z-gpt-6-restore-video-activity-get.md`.
+- [ ] B-005: AI RabbitMQ reconnect loop is caused by stopped fitness-activity-rabbitmq (exit 127). Docker still bind-mounts D:/Learning/fitness-web/activity-service/rabbitmq.conf from the old project root; container init fails with file/directory mount mismatch. Current config is under fitness-web-be. Recreate only the rabbitmq Compose service from the current repo, reusing activity-service_rabbitmq_data; no container changes performed during diagnosis. See log/2026-10-15-codex-rabbitmq-stale-mount.md.
+- [ ] B-004: Activity POST reaches repository.save at ActivityService.java:43, but Atlas TLS handshakes fail with remote internal_error for all three 7grq4yl nodes. Raw Java probes reproduce outside Spring on JDK 26 and 21 with TLS 1.2/1.3 while TCP connects. Atlas IP access list/network TLS interference needs checking; no credential or app-code change made. See log/2026-10-15T0648Z-codex-atlas-tls-diagnosis.md.
+- [x] B-002: Gateway CORS method lacked @Bean and was not wired into the security chain, causing OPTIONS to return 401 without Access-Control-Allow-Origin. Fixed in api-gateway/.../infrastructure/config/SecurityConfig.java; HTTP regression tests cover allowed/disallowed origins and protected POST. See log/2026-10-15T0450Z-codex-gateway-cors.md.
+- [x] B-003: Frontend POST URL is now /api/activities. With explicit user authorization, added Bearer token forwarding and OAuth token synchronization in the sibling frontend; 5 frontend tests, lint and build pass. See frontend .agent/log/2026-10-15T0621Z-gpt-6-bearer-token.md.
 - [x] Gateway validation used the local database primary key and trusted a caller-supplied `X-User-Id`, so an unknown Keycloak `sub` returned 404 and never reached registration. It now validates `keycloakId`, syncs from authenticated JWT claims, and sets the header itself (2026-10-08; see `log/2026-10-08T1340Z-codex-gpt-6-keycloak-user-sync.md`).
+- [x] B-001: Switching from feat/keycloak_auth to dev and feat/config_cors removed tracked Keycloak changes while untracked sync classes remained; restored entity/DTO keycloakId, validation/repository methods, OAuth2 dependency, JWT config and WebFlux routes from c9a01e6. Source files still need a complete commit including untracked modules; see log/2026-10-15T0249Z-codex-keycloak-recovery.md.
 - [x] AI startup failed with invalid MongoDB URI because `${AI_MONGODB_URI}` was not populated from its ignored local env file; local file import now lives in AI's own application.yaml. Activity had the same path gap for `${MONGODB_URI}`; its local import is now configured (2026-10-07; see `log/2026-10-07T0452Z-codex-gpt-6-config-clients.md`).
 - [x] configserver startup failed with `No spring.config.import set` because its POM used Config Client instead of Server; changed dependency, enabled Config Server, fixed native configuration, and verified HTTP endpoint (2026-10-07; see `log/2026-10-07T0418Z-codex-gpt-6-configserver-startup.md`).
 - [ ] Tutorial prompt's improvements and suggestions are object arrays while Recommendation persists `List<String>`; current parser flattens those objects into strings.
@@ -92,8 +103,14 @@
 - 2026-09-28: UserService assigns create/update timestamps before `save()` and User entity no longer uses Hibernate timestamp generators, meeting both save-only and immediate-response requirements. Against: another repository writer could omit timestamps; currently all user writes route through UserService.
 
 ## Last 3 handoffs
+- 2026-10-16T0935Z - gpt-6 - Aligned activity/recommendation success responses with the official tutorial; activity and AI reactor tests pass 30/30. See `log/2026-10-16T093556Z-gpt-6-align-official-tutorial-flow.md`.
+- 2026-10-16T0921Z - gpt-6 - Restored tutorial GET `/api/activities` with `X-User-ID`; activity-service reactor tests pass 14/14. See `log/2026-10-16T092150Z-gpt-6-restore-video-activity-get.md`.
+- 2026-10-15T0648Z - Codex - diagnosed activity save failure as Atlas TLS handshake rejection; reproduced without Mongo driver/credentials across all three nodes. Check Atlas current IP access first; source unchanged. See log/2026-10-15T0648Z-codex-atlas-tls-diagnosis.md.
+- 2026-10-15T0450Z - Codex - fixed gateway CORS wiring; reproduced preflight 401 before the fix, HTTP OPTIONS now 200 and protected POST remains 401; 7 gateway tests pass. Restart gateway to activate; frontend still needs /api/activities. See log/2026-10-15T0450Z-codex-gateway-cors.md.
+- 2026-10-15 - Codex - merged Keycloak history into local dev, switched to feat/config_cors_recovered and deleted old local feat/config_cors; preserved edits and retained a backup stash. See log/2026-10-15-codex-dev-branch-recovery.md.
 - 2026-10-09T0554Z - Codex - removed `/api/users/identity/{keycloakId}/validate` and restored tutorial-style validation through `/api/users/{userId}/validate`; 26 focused tests pass. See `log/2026-10-09T0554Z-codex-gpt-6-tutorial-validation-route.md`.
 - 2026-10-08T1340Z - Codex - implemented Keycloak `sub`-based local user sync, legacy email linking, gateway header forwarding, and WebFlux routes; 26 focused tests pass. See `log/2026-10-08T1340Z-codex-gpt-6-keycloak-user-sync.md`.
+- 2026-10-15T0249Z - Codex - restored missing Keycloak code/config; 58 tests pass. Existing index preserved; no commit/push or branch merge. See log/2026-10-15T0249Z-codex-keycloak-recovery.md.
 - 2026-10-07T0642Z - Codex - configured gateway Swagger aggregation and relative OpenAPI servers; 49 clean tests and live docs proxy pass. See `log/2026-10-07T0642Z-codex-gpt-6-gateway-swagger.md`.
 - 2026-10-07T0625Z - Codex - nested api-gateway under fitness-web Maven parent; validate/test pass. See `log/2026-10-07T0625Z-codex-gpt-6-gateway-parent.md`.
 - 2026-10-07T0452Z - Codex - fixed Config Server client config loading for user/activity/AI; clean 49/49 tests and three Config Server HTTP endpoints pass. See `log/2026-10-07T0452Z-codex-gpt-6-config-clients.md`.
@@ -146,6 +163,6 @@
 - 2026-09-26T0444Z - Codex - Email removed from update, password change API added; clean Maven suite passes (16 tests). See `log/2026-09-26T0444Z-codex-gpt-6.md`.
 - 2026-09-26T0437Z - Codex - Swagger UI URL logged at server startup; clean Maven suite passes (15 tests). See `log/2026-09-26T0437Z-codex-gpt-6.md`.
 - 2026-09-26T0433Z - Codex - Swagger UI and OpenAPI JSON exposed on user-service; clean Maven suite passes (15 tests). See `log/2026-09-26T0433Z-codex-gpt-6.md`.
-- 2026-09-26T0428Z · Codex · user CRUD and ApiResponse source restored; clean Maven suite passes (13 tests). See `log/2026-09-26T0428Z-codex-gpt-6.md`.
-- 2026-09-25T1615Z · Codex · HTTP error mapping and path-variable binding fixed; full Maven suite passes (13 tests). See `log/2026-09-25T1615Z-codex-gpt-6.md`.
-- 2026-09-25T1550Z · Codex · default response factories and user CRUD endpoints added; full Maven test suite passes (8 tests). See `log/2026-09-25T1550Z-codex-gpt-6.md`.
+- 2026-09-26T0428Z Â· Codex Â· user CRUD and ApiResponse source restored; clean Maven suite passes (13 tests). See `log/2026-09-26T0428Z-codex-gpt-6.md`.
+- 2026-09-25T1615Z Â· Codex Â· HTTP error mapping and path-variable binding fixed; full Maven suite passes (13 tests). See `log/2026-09-25T1615Z-codex-gpt-6.md`.
+- 2026-09-25T1550Z Â· Codex Â· default response factories and user CRUD endpoints added; full Maven test suite passes (8 tests). See `log/2026-09-25T1550Z-codex-gpt-6.md`.

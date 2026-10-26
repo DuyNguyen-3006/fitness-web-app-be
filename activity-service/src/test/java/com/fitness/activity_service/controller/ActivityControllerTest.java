@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ActivityControllerTest {
 
     @Test
-    void postActivityReturnsCreatedResponse() throws Exception {
+    void postActivityReturnsOkResponse() throws Exception {
         ActivityInterface service = mock(ActivityInterface.class);
         ActivityResponse activity = new ActivityResponse();
         activity.setId("activity-1");
@@ -35,11 +35,11 @@ class ActivityControllerTest {
                 .setControllerAdvice(new ActivityExceptionHandler()).build();
 
         mvc.perform(post("/api/activities")
+                        .header("X-User-ID", "user-1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userId\":\"user-1\",\"type\":\"RUNNING\"}"))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value("activity-1"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("activity-1"));
         verify(service).trackActivity(any());
     }
 
@@ -51,6 +51,7 @@ class ActivityControllerTest {
                 .setControllerAdvice(new ActivityExceptionHandler()).build();
 
         mvc.perform(post("/api/activities")
+                        .header("X-User-ID", "missing")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userId\":\"missing\",\"type\":\"RUNNING\"}"))
                 .andExpect(status().isBadRequest())
@@ -68,10 +69,10 @@ class ActivityControllerTest {
         MockMvc mvc = MockMvcBuilders.standaloneSetup(new ActivityController(service))
                 .setControllerAdvice(new ActivityExceptionHandler()).build();
 
-        mvc.perform(get("/api/activities/user/user-1"))
+        mvc.perform(get("/api/activities")
+                        .header("X-User-ID", "user-1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].id").value("activity-1"));
+                .andExpect(jsonPath("$[0].id").value("activity-1"));
         verify(service).getUserTrack("user-1");
     }
 
@@ -82,6 +83,7 @@ class ActivityControllerTest {
                 .setControllerAdvice(new ActivityExceptionHandler()).build();
 
         mvc.perform(post("/api/activities")
+                        .header("X-User-ID", "user-1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{invalid json"))
                 .andExpect(status().isBadRequest())
@@ -90,7 +92,7 @@ class ActivityControllerTest {
     }
 
     @Test
-    void getActivityByIdReturnsApiResponseAnd404ForMissingId() throws Exception {
+    void getActivityByIdReturnsActivityAnd404EnvelopeForMissingId() throws Exception {
         ActivityInterface service = mock(ActivityInterface.class);
         ActivityResponse activity = new ActivityResponse();
         activity.setId("activity-1");
@@ -103,8 +105,7 @@ class ActivityControllerTest {
 
         mvc.perform(get("/api/activities/activity-1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value("activity-1"));
+                .andExpect(jsonPath("$.id").value("activity-1"));
         mvc.perform(get("/api/activities/missing"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
